@@ -62,9 +62,7 @@ vec4 lightNew(vec3 pos, float ambient, vec3 normal, vec3 diffColor, vec3 specCol
 	float maxLod = 6.0;
 	float specLod = maxLod * (1.0 - glossiness);
 
-	vec3 refNormal = normal;
-	if (refNormal.z < 0)
-		refNormal = reflect(refNormal, vec3(1.0, 0.0, 0.0));
+	vec3 refNormal = vec3(normal.xy, normal.z < 0 ? -normal.z : normal.z);
 
 	vec3 diffLight0 = decodeRgbe(textureLod(lightTex0, refNormal, maxLod));
 	vec3 specLight0 = decodeRgbe(textureLod(lightTex0, reflDir, specLod));

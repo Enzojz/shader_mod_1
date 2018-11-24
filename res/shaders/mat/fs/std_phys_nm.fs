@@ -35,7 +35,7 @@ void main() {
 	vec3 metalGlossAo = texture(metalGlossAoTex, texCoordAlpha.xy).rgb;
 
 	float ambient = min(posAmbient.w, metalGlossAo.b);
-	
+
 	color.rgb = toneMap(applyFog(lightPhysSsao(posAmbient.xyz, ambient, transfNormal, albedo, metalGlossAo.r, metalGlossAo.g)));
 	color.a = texCoordAlpha.z;
 }
