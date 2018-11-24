@@ -65,9 +65,13 @@ vec4 lightNew(vec3 pos, float ambient, vec3 normal, vec3 diffColor, vec3 specCol
 	vec3 refNormal = vec3(normal.xy, normal.z < 0 ? -normal.z : normal.z);
 
 	vec3 diffLight0 = decodeRgbe(textureLod(lightTex0, refNormal, maxLod));
+	vec3 diffLight0b = decodeRgbe(textureLod(lightTex0, normal, maxLod));
+	diffLight0 *= length(diffLight0b) / length(diffLight0);
 	vec3 specLight0 = decodeRgbe(textureLod(lightTex0, reflDir, specLod));
 
 	vec3 diffLight1 = decodeRgbe(textureLod(lightTex1, refNormal, maxLod));
+	vec3 diffLight1b = decodeRgbe(textureLod(lightTex1, normal, maxLod));
+	diffLight1 *= length(diffLight1b) / length(diffLight1);
 	vec3 specLight1 = decodeRgbe(textureLod(lightTex1, reflDir, specLod));
 
 	//vec3 diffLight = mix(diffLight0, diffLight1, shadow);
