@@ -62,7 +62,7 @@ vec4 lightNew(vec3 pos, float ambient, vec3 normal, vec3 diffColor, vec3 specCol
 	float maxLod = 6.0;
 	float specLod = maxLod * (1.0 - glossiness);
 
-	vec3 refNormal = vec3(normal.xy, normal.z < 0 ? -normal.z : normal.z);
+	vec3 refNormal = normalize(vec3(normal.xy, normal.z < 0 ? 0 : normal.z));
 
 	vec3 diffLight0 = decodeRgbe(textureLod(lightTex0, refNormal, maxLod));
 	vec3 diffLight0b = decodeRgbe(textureLod(lightTex0, normal, maxLod));
@@ -144,18 +144,43 @@ vec3 lightSsao(vec4 posAmbient, vec3 normal, vec4 matCoeff, vec3 color) {
 	return lightNew(posAmbient.xyz, min(getSsaoTerm(), posAmbient.w), normal, matCoeff, color);
 }
 
-vec4 lightNewNoShadow(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness, float alpha) {
-	//metalness = 1.0;
-	//glossiness = 1.0;
+vec4 lightNewLightmap(vec3 pos, float ambient, vec3 normal, vec3 diffColor, vec3 specColor, float glossiness, float brightness, float alpha) {
+	// comp reflection vector
+	vec3 camVertex = pos - viewInverse[3].xyz;
+	vec3 reflDir = normalize(reflect(camVertex, normal));
 
-	vec3 diffColor = mix(albedo, vec3(.0), metalness);
-	//vec3 specColor = mix(vec3(.04), albedo, metalness);
-	vec3 specColor = mix(vec3(mix(.01, .05, glossiness)), albedo, metalness);
+	// appoximation of the fresnel equation
+	//float nDotR = max(dot(normal, reflDir), .0);
+	//float nDotR = clamp(dot(normal, reflDir), .0, 1.0);
+	float nDotR = min(abs(dot(normal, reflDir)), 1.0);
+	specColor += max(vec3(glossiness) - specColor, vec3(.0)) * vec3(pow(1.0 - nDotR, 5.0));
 
-	return lightNew(pos, ambient, normal, diffColor, specColor, glossiness, alpha, 1.0);
+	diffColor *= vec3(1.0) - specColor;
+
+	float maxLod = 6.0;
+	float specLod = maxLod * (1.0 - glossiness);
+
+	vec3 refNormal = normalize(vec3(normal.xy, normal.z < 0 ? 0 : normal.z));
+
+	float ao = getSsaoTerm() * brightness;
+	
+	//vec3 diffLight = mix(diffLight0, diffLight1, shadow);
+	float diffLight = ambient *  ao; // + mix(.35, 1.0, ambient) * (brightness - diffLight0);
+	float specLight = dot(decodeRgbe(textureLod(lightTex1, reflDir, specLod)), vec3(1.0)) / 3.0;
+
+	float alpha2 = 1.0 - (1.0 - specColor.r) * (1.0 - alpha);
+	return vec4(diffColor * diffLight + specColor * specLight, alpha2);
 }
 
-vec4 lightPhysSsaoNoShadow(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness, float alpha) {
+
+vec4 lightNewLightmap(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness, float brightness, float alpha) {
+	vec3 diffColor = mix(albedo, vec3(.0), metalness);
+	vec3 specColor = mix(vec3(mix(.01, .05, glossiness)), albedo, metalness);
+
+	return lightNewLightmap(pos, ambient, normal, diffColor, specColor, glossiness, brightness, alpha);
+}
+
+vec4 lightPhysSsaoLightmap(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness, float brightness, float alpha) {
 	//metalness = 1.0 - pow(1.0 - metalness, 2.2);
 	metalness = metalness * (2.0 - metalness);		// = 1.0 - (1.0 - metalness)^2
 
@@ -163,12 +188,11 @@ vec4 lightPhysSsaoNoShadow(vec3 pos, float ambient, vec3 normal, vec3 albedo, fl
 	float f2 = .6522;		// log(2048) / log(1000000)
 
 	glossiness = glossiness <= f1 ? f2 * glossiness : f1 * f2 + (1.0 - f1 * f2) * (glossiness - f1) / (1.0 - f1);
-
 	albedo = pow(albedo, vec3(2.2));
 
-	return lightNewNoShadow(pos, getSsaoTerm() * ambient, normal, albedo, metalness, glossiness, alpha);
+	return lightNewLightmap(pos, ambient, normal, albedo, metalness, glossiness, brightness, alpha);
 }
 
-vec3 lightPhysSsaoNoShadow(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness) {
-	return lightPhysSsaoNoShadow(pos, ambient, normal, albedo, metalness, glossiness, 1.0).rgb;
+vec3 lightPhysSsaoLightmap(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness, float brightness) {
+	return lightPhysSsaoLightmap(pos, ambient, normal, albedo, metalness, glossiness, brightness, 1.0).rgb;
 }

@@ -32,7 +32,7 @@ out vec4 color;
 
 vec3 decodeNormalScale(vec2 color, float scale);
 vec3 lightPhysSsao(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness);
-vec3 lightPhysSsaoNoShadow(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness);
+vec3 lightPhysSsaoLightmap(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness, float brightness);
 vec3 applyFog(vec3 color);
 vec3 toneMap(vec3 color);
 vec3 applyOp(vec3 pos, vec3 nrml, vec2 texCoord, sampler2D tex, ivec2 settings, vec2 scale, float opacity, vec3 color);
@@ -49,23 +49,22 @@ bool isNonTrival(){
 
 vec2 uvPos()
 {
-	vec4 checkValue = texture(aoTex, vec2(0.0625, 0.0625)) * 4;
-	if (checkValue.b == 0.0)  
-		return texCoordAlpha.xy;
-	else //(checkValue == 1.0)
-		return posAmbient.xy;
-	// else if (checkValue == 2.0)
-	// {
-	// 	vec2 nxy = normalize(normal.xy);
-	// 	vec2 mxy = nxy.yx * (mod(posAmbient.xy));
-	// 	return vec2(mxy.x, posAmbient.z);
-	// }
-	// else
-	// {
-	// 	vec2 nxy = normalize(normal.xy);
-	// 	vec2 mxy = nxy.yx * (mod(posAmbient.xy));
-	// 	return vec2(mxy.y, posAmbient.z);
-	// }
+	vec3 checkValueU = vec3(
+		texture(aoTex, vec2(0.0625, 0.0625)).b,
+		texture(aoTex, vec2(0.0625, 0.1875)).b,
+		texture(aoTex, vec2(0.0625, 0.3125)).b
+	);
+
+	vec3 checkValueV = vec3(
+		texture(aoTex, vec2(0.9375, 0.9375)).b,
+		texture(aoTex, vec2(0.9375, 0.8125)).b,
+		texture(aoTex, vec2(0.9375, 0.6875)).b
+	);
+
+	return vec2(
+		dot(step(0.75, checkValueU), posAmbient.xyz) + dot(1.0 - step(0.25, checkValueU), texCoordAlpha.xyz),
+		dot(step(0.75, checkValueV), posAmbient.xyz) + dot(1.0 - step(0.25, checkValueV), texCoordAlpha.xyz)
+	);
 }
 
 void main() {
@@ -82,8 +81,9 @@ void main() {
 		vec3 albedo = texture(albedoTex, uv).rgb;
 		vec3 metalGlossAo = texture(metalGlossAoTex, uv).rgb;
 
-		float ambient = min(posAmbient.w, metalGlossAo.b);	
-		color.rgb = toneMap(applyFog(lightPhysSsaoNoShadow(posAmbient.xyz, ambient, transfNormal, albedo, metalGlossAo.r, metalGlossAo.g)));
+		float ambient = min(posAmbient.w, metalGlossAo.b);
+		vec3 rawColor = lightPhysSsaoLightmap(posAmbient.xyz, ambient, transfNormal, albedo, metalGlossAo.r, metalGlossAo.g, texture(aoTex, texCoord1).g);
+		color.rgb = toneMap(applyFog(rawColor));
 	}
 	else 
 	{
@@ -95,8 +95,8 @@ void main() {
 
 		vec3 albedo = texture(albedoTex, texCoordAlpha.xy).rgb;
 
-		// albedo = applyOp(posAmbient.xyz, normal, texCoordAlpha.xy, opTex1, opSettings1, opScale1, opOpacity1, albedo);
-		// albedo = applyOp(posAmbient.xyz, normal, texCoordAlpha.xy, opTex2, opSettings2, opScale2, opOpacity2, albedo);
+		albedo = applyOp(posAmbient.xyz, normal, texCoordAlpha.xy, opTex1, opSettings1, opScale1, opOpacity1, albedo);
+		albedo = applyOp(posAmbient.xyz, normal, texCoordAlpha.xy, opTex2, opSettings2, opScale2, opOpacity2, albedo);
 
 		vec3 metalGlossAo = texture(metalGlossAoTex, texCoordAlpha.xy).rgb;
 

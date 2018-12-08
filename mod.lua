@@ -1,24 +1,23 @@
 function data()
-  return {
-  
-	info = {
-		minorVersion = 1,
-		severityAdd = "NONE",
-		severityRemove = "NONE", 
-		name = _("title"),
-		description = _("description"),			
-		tags = { "Shader" },		
-		visible = true,		
-			
-			authors = {	
-				{
-					name = 'Snowball',
-					role = 'CREATOR',
-					text = 'For myself',
-				},
-			},
-	},
+    return {
+            
+            info = {
+                -- minorVersion = 0,
+                severityAdd = "NONE",
+                severityRemove = "NONE",
+                name = _("title"),
+                description = _("description"),
+                visible = true,
+                authors = {
+                    {
+                        name = 'Enzojz',
+                        role = 'CREATOR',
+                        tfnetId = 27218,
+                    },
+                },
+                tags = {"Shader"},
+            },
+    
+    }
 
-	}
-	
 end
