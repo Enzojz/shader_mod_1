@@ -5,7 +5,6 @@ uniform mat4 viewInverse;
 uniform sampler2D albedoTex;
 uniform sampler2D metalGlossAoTex;
 uniform sampler2D normalTex;
-uniform sampler2D aoTex;
 
 uniform float normalScale;
 
@@ -26,7 +25,6 @@ in vec3 normal;
 in vec3 tangent;
 in vec3 binormal;
 in vec3 texCoordAlpha;
-in vec2 texCoord1;
 
 out vec4 color;
 
@@ -68,31 +66,31 @@ vec2 uvPos()
 
 void main() {
 	vec2 uv = uvPos();
-		
+
 	vec4 nrmlTexValue = texture(normalTex, uv);
 	vec3 texNormal = decodeNormalScale(nrmlTexValue.rg, normalScale);
 	mat3 tangentMat = mat3(tangent, binormal, normal);
 	vec3 transfNormal = normalize(tangentMat * texNormal);
 	if (!gl_FrontFacing && flipNormal) transfNormal = -transfNormal;
-
+	
 	vec3 albedo = texture(albedoTex, uv).rgb;
 
 	vec3 metalGlossAo = texture(metalGlossAoTex, uv).rgb;
 
-	vec4 aoCol = texture(aoTex, texCoord1);
-	metalGlossAo.b *= clamp(aoCol.r - .5, .0, .5) * 2.0;	
-	float ambient = min(posAmbient.w, metalGlossAo.b);	
-	
+	float ambient = min(posAmbient.w, metalGlossAo.b);
+
 	if (isNonTrival())
 	{
 		albedo = applyOp(posAmbient.xyz, normal, uv, opTex2, opSettings2, opScale2, opOpacity2, albedo);
-		vec3 rawColor = lightPhysSsaoLightmap(posAmbient.xyz, ambient, transfNormal, albedo, metalGlossAo.r, metalGlossAo.g, texture(aoTex, texCoord1).g);
+
+		vec3 rawColor = lightPhysSsaoLightmap(posAmbient.xyz, ambient, transfNormal, albedo, metalGlossAo.r, metalGlossAo.g, 1.0);
 		color.rgb = toneMap(applyFog(rawColor));
-	}
+	} 
 	else
 	{
 		albedo = applyOp(posAmbient.xyz, normal, uv, opTex1, opSettings1, opScale1, opOpacity1, albedo);
 		albedo = applyOp(posAmbient.xyz, normal, uv, opTex2, opSettings2, opScale2, opOpacity2, albedo);
+
 		color.rgb = toneMap(applyFog(lightPhysSsao(posAmbient.xyz, ambient, transfNormal, albedo, metalGlossAo.r, metalGlossAo.g)));
 	}
 	color.a = texCoordAlpha.z;
