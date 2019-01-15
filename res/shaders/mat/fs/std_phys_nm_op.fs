@@ -35,11 +35,28 @@ vec3 applyFog(vec3 color);
 vec3 toneMap(vec3 color);
 vec3 applyOp(vec3 pos, vec3 nrml, vec2 texCoord, sampler2D tex, ivec2 settings, vec2 scale, float opacity, vec3 color);
 
+// These four values means use the mod shader, since they are negative and lower than -1, almost impossible to have impact on non-concerned materials
 bool isNonTrival(){ return any(equal(vec4(opOpacity1), vec4(-128.0, -256.0, -512.0, -1024.0))); }
 
+// Check if the UV coordinate should be overwritten
 vec2 uvPos()
-{
-	if (opOpacity1 == -256.0) 
+{	
+	if (opOpacity1 <= -1024.0) // Tangent-Bitangent
+	{
+		vec3 nrml = normalize(normal);
+		vec3 xDir = normalize(tangent);
+		vec3 yDir = cross(nrml, xDir);
+		return vec2(dot(posAmbient.xyz, xDir), dot(posAmbient.xyz, yDir)) * opScale1;
+	}
+	else if (opOpacity1 <= -512.0) // Normal-Reference-Axis
+	{
+		vec3 nrml = normalize(normal);
+		vec3 axis = normalize(texture(opTex1, vec2(0.25, 0.5)).xyz * (step(0.5, texture(opTex1, vec2(0.75, 0.5)).xyz) - 0.5));
+		vec3 xDir = cross(nrml, axis);
+		vec3 yDir = cross(nrml, xDir);
+		return vec2(dot(posAmbient.xyz, xDir), dot(posAmbient.xyz, yDir)) * opScale1;
+	}
+	else if (opOpacity1 <= -256.0) // World xyz
 	{
 		vec3 checkValueU = texture(opTex1, vec2(0.25, 0.5)).xyz;
 		vec3 checkValueV = texture(opTex1, vec2(0.75, 0.5)).xyz;
@@ -48,19 +65,9 @@ vec2 uvPos()
 			dot(step(0.75, checkValueU), posAmbient.xyz) + dot(1.0 - step(0.25, checkValueU), texCoordAlpha.xyz),
 			dot(step(0.75, checkValueV), posAmbient.xyz) + dot(1.0 - step(0.25, checkValueV), texCoordAlpha.xyz)
 		) * opScale1;
-	} else if (opOpacity1 == -512.0)
-	{
-		vec3 axis = normalize(texture(opTex1, vec2(0.5, 0.5)).xyz);
-		vec3 xDir = normalize(cross(normal, axis));
-		vec3 yDir = cross(normal, xDir);
-		return vec2(dot(posAmbient.xyz, xDir), dot(posAmbient.xyz, yDir)) * opScale1;
-	} else if (opOpacity1 == -1024.0)
-	{
-		vec3 xDir = normalize(tangent);
-		vec3 yDir = normalize(binormal);
-		return vec2(dot(posAmbient.xyz, xDir), dot(posAmbient.xyz, yDir)) * opScale1;
-	}
-	else 
+	} else if (opOpacity1 <= -128.0) // UV
+		return texCoordAlpha.xy * opScale1;
+	else // Non trival
 		return texCoordAlpha.xy;
 }
 
@@ -88,7 +95,8 @@ void main() {
 	} 
 	else
 	{
-		albedo = applyOp(posAmbient.xyz, normal, uv, opTex1, opSettings1, opScale1, opOpacity1, albedo);
+		if (opOpacity1 > -128)
+			albedo = applyOp(posAmbient.xyz, normal, uv, opTex1, opSettings1, opScale1, opOpacity1, albedo);
 		albedo = applyOp(posAmbient.xyz, normal, uv, opTex2, opSettings2, opScale2, opOpacity2, albedo);
 
 		color.rgb = toneMap(applyFog(lightPhysSsao(posAmbient.xyz, ambient, transfNormal, albedo, metalGlossAo.r, metalGlossAo.g)));
