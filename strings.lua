@@ -1,14 +1,20 @@
 descEN = [[This mod fix and add extra effects on shaders.
 - Fix the yellow cast on tunnel ceiling.
-- The extra effects is in WIP, will be used on the coming Ultimate Underground Station
+- Enables shadow free materials
+- Enables lightmap
+- Enhanced UV projection solutions
 ]]
 descFR = [[Ce mod corrige et ajoute des effets supplémentaires sur shaders.
 - Correction de cast jeune sur les ceil des tunnels.
-- Les effets supplémentaires qui sont en cours d'implémentation, seront utilisé par le station sous-terrain à venir.
+- Possibilté de supprimer les ombres
+- Possibilté d'application de lightmap
+- Projection des UV en façons divers
 ]]
 descCN = [[该MOD改进并且增加一些着色器的效果
 - 修正隧道顶部偏黄的问题
-- 特殊效果尚在开发中，将在正在制作中的终极地下车站中使用
+- 取消阴影效果
+- 增加光照贴图支持
+- 增加多种UV投射方式
 ]]
 
 function data()
