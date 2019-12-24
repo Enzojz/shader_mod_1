@@ -22,6 +22,7 @@ uniform bool flipNormal;
 in vec4 posAmbient;
 in vec3 normal_;
 in vec3 tangent_;
+in vec3 binormal_;
 centroid in vec3 texCoordAlpha;
 
 vec3 getFaceNormal(vec3 normal_, bool flip);
