@@ -194,3 +194,93 @@ vec4 getAlbedoAndGlossForLegacyMatCoeff(vec4 matCoeff, vec3 color) {
 
 	return vec4(pow(albedo, vec3(1.0 / 2.2)), glossiness);
 }
+
+
+//==============================================================
+
+
+vec4 lightDiffSpecLm(vec3 pos, float ambient, vec3 normal, vec3 diffColor, vec3 specColor, float glossiness,
+		float alpha, float brightness) {
+	
+	diffColor = clamp(diffColor, vec3(.0), vec3(1.0));
+	specColor = clamp(specColor, vec3(.0), vec3(1.0));
+
+	// comp reflection vector
+	vec3 camVertex = pos - viewInverse[3].xyz;
+	vec3 reflDir = normalize(reflect(camVertex, normal));
+
+	// appoximation of the fresnel equation
+	//float nDotR = max(dot(normal, reflDir), .0);
+	//float nDotR = clamp(dot(normal, reflDir), .0, 1.0);
+	float nDotR = min(abs(dot(normal, reflDir)), 1.0);
+	specColor += max(vec3(glossiness) - specColor, vec3(.0)) * vec3(pow(1.0 - nDotR, 5.0));
+
+	diffColor *= vec3(1.0) - specColor;
+
+	float maxLod = 6.0;
+	float specLod = maxLod * (1.0 - glossiness);
+
+	vec3 diffLight0 = getLight(lightTex0, normal, maxLod).rgb;
+	
+	vec3 specLight0 = getLight(lightTex0, reflDir, specLod).rgb;
+
+	vec3 diffLight1 = getLight(lightTex1, normal, maxLod).rgb;
+	vec3 specLight1 = getLight(lightTex1, reflDir, specLod).rgb;
+
+	if (ambientScale > 1.0) {
+		vec3 diffF = vec3(max(dot(normal, lightDir), .0));
+		vec3 diffB = + vec3(max(dot(normal, vec3(0, 0, 1)), .0));
+	
+		float diffNorm = 1.0 / lightScale;
+	
+		diffLight0 = diffNorm * .25 * (1.0 + diffB);
+		diffLight1 = diffNorm * 1.5 * ((diffLight0 + diffF));
+		
+		specLight0 = vec3(.1 / lightScale);
+		specLight1 = vec3((1.0 / lightScale) * max(dot(reflDir, lightDir), .0));
+	}
+
+	//vec3 diffLight = mix(diffLight0, diffLight1, shadow);
+	vec3 diffLight = vec3(ambientScale * ambient * brightness);// + 1.0 / ambientScale * mix(.35, 1.0, ambient) * shadow * (diffLight1 - diffLight0);
+	vec3 specLight = mix(ambientScale * specLight0, 1.0 / ambientScale * specLight1, vec3(1.0));	// TODO ambient (depending on specExp)
+
+	//return lightScale * (diffColor * diffLight + specColor * specLight);
+	// assuming specColor.r = g = b
+	float alpha2 = 1.0 - (1.0 - specColor.r) * (1.0 - alpha);
+
+	return vec4(lightScale * (diffColor * diffLight + specColor * specLight), alpha2);
+}
+
+vec4 lightPhysLinearLm(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness,
+		float alpha, float brightness) {
+
+	vec3 diffColor = mix(albedo, vec3(.0), metalness);
+	//vec3 specColor = mix(vec3(.04), albedo, metalness);
+	vec3 specColor = mix(vec3(mix(.01, .05, glossiness)), albedo, metalness);
+
+	return lightDiffSpecLm(pos, ambient, normal, diffColor, specColor, glossiness, alpha, brightness);
+}
+
+
+vec4 lightPhysLm(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness,
+		float alpha, float brightness) {
+
+	//metalness = 1.0 - pow(1.0 - metalness, 2.2);
+	metalness = metalness * (2.0 - metalness);		// = 1.0 - (1.0 - metalness)^2
+
+	float f1 = .875;
+	float f2 = .6522;		// log(2048) / log(1000000)
+
+	glossiness = glossiness <= f1 ? f2 * glossiness : f1 * f2 + (1.0 - f1 * f2) * (glossiness - f1) / (1.0 - f1);
+
+	albedo = pow(albedo, vec3(2.2));
+
+	return lightPhysLinearLm(pos, ambient, normal, albedo, metalness, glossiness, alpha, brightness);
+}
+
+void fragmentOutputLm(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness,
+		float alpha, float brightness) {
+
+	color0 = applyFog(lightPhysLm(pos, ambient, normal, albedo, metalness, glossiness, alpha, brightness));
+	color1 = vec4(normalToRgb(normal), 1.0);
+}
