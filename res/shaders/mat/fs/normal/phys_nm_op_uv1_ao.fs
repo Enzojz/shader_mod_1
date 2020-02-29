@@ -44,7 +44,27 @@ bool isNonTrival(){ return any(equal(vec4(opOpacity1), vec4(-128.0, -256.0, -512
 // Check if the UV coordinate should be overwritten
 vec2 uvPos()
 {	
-	if (opOpacity1 <= -1024.0) // Tangent-Bitangent
+	if (opOpacity1 <= -2048.0) // Tangent-Bitangent
+	{
+		vec3 xDir = normalize(tangent_);
+		vec3 yDir = normalize(binormal_);
+
+		vec4 checkValueU = texture(opTex1, vec2(0.25, 0.5)).xyzw;
+		vec4 checkValueV = texture(opTex1, vec2(0.75, 0.5)).xyzw;
+
+		vec4 pos = vec4(
+			dot(posAmbient.xyz, xDir), 
+			dot(posAmbient.xyz, yDir),
+			texCoordAlpha.x,
+			texCoordAlpha.y
+		);
+
+		return vec2(
+			dot(step(0.5, checkValueU), pos),
+			dot(step(0.5, checkValueV), pos)
+		) * opScale1;
+	}
+	else if (opOpacity1 <= -1024.0) // Tangent-Bitangent
 	{
 		vec3 xDir = normalize(tangent_);
 		vec3 yDir = normalize(binormal_);

@@ -1,9 +1,10 @@
 function data()
     return {
         info = {
-            -- minorVersion = 0,
+            minorVersion = 1,
             severityAdd = "NONE",
             severityRemove = "NONE",
+            minorVersion = 1,
             name = _("title"),
             description = _("description"),
             visible = true,

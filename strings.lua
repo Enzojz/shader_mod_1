@@ -8,7 +8,6 @@ descFR = [[Ce mod corrige et ajoute des effets supplémentaires sur shaders.
 - Possibilté d'application de lightmap
 - Projection des UV en façons divers
 ]]
-descCN = 
 
 function data()
 	return {
