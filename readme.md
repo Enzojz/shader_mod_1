@@ -64,7 +64,7 @@ This retrived value will be normalized then cross multiplied with the normal vec
 For example:
  - (0, 0, 255) on the left, and black on the right means (0, 0, -1), if the normal is directed to Y direction (0, 1, 0), then you will get a U towards up (0, 0, 1) and V towards position X (1, 0, 0).
  
-4. If opacity ≤ -1024, the mapping will be done as tangent as U, and bi-tangent (bi-normal) as V. This effect is not supported by PHYSICAL_NRML_MAP_UV1_AO.
-5. If opacity ≤ -1280, the mapping may be done as tangent as U, and bi-tangent (bi-normal) as V, with map_op_1 uses RGBA channels as the coordinate selector, with left half as U, and right half as V. The RGBA channels coresponds to tangent/bi-tangent/U/V. This effect is not supported by PHYSICAL_NRML_MAP_UV1_AO.
+1. If opacity ≤ -1024, the mapping will be done as tangent as U, and bi-tangent (bi-normal) as V.
+2. If opacity ≤ -1280, the mapping may be done as tangent as U, and bi-tangent (bi-normal) as V, with map_op_1 uses RGBA channels as the coordinate selector, with left half as U, and right half as V. The RGBA channels coresponds to tangent/bi-tangent/U/V.
 
 For 2, 3, 4, change of the scale paramter will let the projection being fit.

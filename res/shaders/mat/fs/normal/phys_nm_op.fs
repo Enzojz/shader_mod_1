@@ -34,7 +34,7 @@ vec3 getNormalMapped(vec3 texNormal, vec3 normal_, vec3 binormal_, vec3 tangent_
 vec3 applyOp(vec3 pos, vec3 nrml, vec2 texCoord, sampler2D tex, ivec2 settings, vec2 scale, float opacity, vec3 color);
 void fragmentOutput(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness, float alpha);
 void fragmentOutput(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness, float alpha, float shadow);
-void fragmentOutputLm(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness, float alpha, float brightness);
+void fragmentOutputLightMap(vec3 pos, float ambient, vec3 normal, vec3 albedo, float metalness, float glossiness, float alpha, float brightness);
 
 // These four values means use the mod shader, since they are negative and lower than -1, almost impossible to have impact on non-concerned materials
 bool isNonTrival(){ return any(equal(vec4(opOpacity1), vec4(-128.0, -256.0, -512.0, -1024.0))); }
@@ -110,7 +110,7 @@ void main() {
 	if (isNonTrival())
 	{
 		albedo = applyOp(posAmbient.xyz, faceNormal, uv, opTex2, opSettings2, opScale2, opOpacity2, albedo);
-		fragmentOutputLm(posAmbient.xyz, ambient, normal, albedo * albedoScale, metalGlossAo.r, metalGlossAo.g, texCoordAlpha.z, 1.0);
+		fragmentOutputLightMap(posAmbient.xyz, ambient, normal, albedo * albedoScale, metalGlossAo.r, metalGlossAo.g, texCoordAlpha.z, 1.0);
 	} 
 	else
 	{
