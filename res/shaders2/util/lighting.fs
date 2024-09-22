@@ -25,12 +25,13 @@
 // Workaround for intel HD:
 #define IF_00(t, e) t
 #ifdef UG_COMPILE_SPIRV
-#define gl_VertexID gl_VertexIndex
+	#define gl_VertexID gl_VertexIndex
 
 	#define LAYOUT_SAMPLER2(s, b) layout(set = s, binding = b)
 	#define LAYOUT_SAMPLER(s, b) layout(set = s, binding = b)
 	#define LAYOUT_UBO(s, b) layout(std140, set = s, binding = b)
 	#define LAYOUT_PUSH_CONSTANT() layout(push_constant, std140)
+	#define LAYOUT_STORAGE(s, b) layout(std140, set = s, binding = b) readonly restrict buffer
 
 	#define VERTEX_INPUT(loc, type, name, defaultValue) IF(loc, layout (location = loc) in type name, const type name = defaultValue)
 		
@@ -59,6 +60,7 @@
 	#define LAYOUT_SAMPLER(s, b) layout(binding = b)
 	#define LAYOUT_UBO(s, b) layout(std140, binding = b)
 	#define LAYOUT_PUSH_CONSTANT() layout(std140, binding = 2)
+	#define LAYOUT_STORAGE(s, b) layout(std140, binding = b) buffer
 
 	#define VERTEX_INPUT(loc, type, name, defaultValue) IF(loc, layout (location = loc) in type name, const type name = defaultValue)
 		
@@ -292,7 +294,7 @@ vec4 getAlbedoAndGlossForLegacyMatCoeff(vec4 matCoeff, vec3 color) {
 
 	return vec4(pow(albedo, vec3(1.0 / 2.2)), glossiness);
 }
-// 
+//
 
 //==============================================================
 
@@ -318,8 +320,11 @@ vec4 lightDiffSpecLightMap(vec3 pos, float ambient, vec3 normal, vec3 diffColor,
 	float maxLod = 6.0;
 	float specLod = maxLod * (1.0 - glossiness);
 
+	//// vec3 diffLight0 = getLight(lightTex0, normal, maxLod).rgb;
 	
 	vec3 specLight0 = getLight(lightTex0, reflDir, specLod).rgb;
+
+	/// vec3 diffLight1 = getLight(lightTex1, normal, maxLod).rgb;
 	vec3 specLight1 = getLight(lightTex1, reflDir, specLod).rgb;
 
 	if (u_light.ambientScale > 1.0) {
@@ -327,14 +332,17 @@ vec4 lightDiffSpecLightMap(vec3 pos, float ambient, vec3 normal, vec3 diffColor,
 		vec3 diffB = + vec3(max(dot(normal, vec3(0, 0, 1)), .0));
 	
 		float diffNorm = 1.0 / u_light.lightScale;
+	
+		//// diffLight0 = diffNorm * .25 * (1.0 + diffB);
+		//// diffLight1 = diffNorm * 1.5 * ((diffLight0 + diffF));
 		
 		specLight0 = vec3(.1 / u_light.lightScale);
 		specLight1 = vec3((1.0 / u_light.lightScale) * max(dot(reflDir, u_light.lightDir), .0));
 	}
 
 	//vec3 diffLight = mix(diffLight0, diffLight1, shadow);
-	// vec3 diffLight = vec3(u_light.ambientScale * ambient * brightness);// + 1.0 / u_light.ambientScale * mix(.35, 1.0, ambient) * shadow * (diffLight1 - diffLight0);
-	
+	//// vec3 diffLight = u_light.ambientScale * ambient * diffLight0 + 1.0 / u_light.ambientScale * mix(.35, 1.0, ambient) * shadow * (diffLight1 - diffLight0);
+	//// vec3 specLight = mix(u_light.ambientScale * specLight0, 1.0 / u_light.ambientScale * specLight1, shadow);	// TODO ambient (depending on specExp)
 	vec3 diffLight = vec3(u_light.ambientScale * ambient * brightness);
 	vec3 specLight = mix(u_light.ambientScale * specLight0, 1.0 / u_light.ambientScale * specLight1, vec3(1.0));	// TODO ambient (depending on specExp)
 

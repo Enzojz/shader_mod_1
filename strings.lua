@@ -1,12 +1,10 @@
 descEN = [[This mod fix and add extra effects on shaders.
 - Enables shadow free materials
 - Enables lightmap
-- Enhanced UV projection solutions
 ]]
 descFR = [[Ce mod corrige et ajoute des effets supplémentaires sur shaders.
 - Possibilté de supprimer les ombres
 - Possibilté d'application de lightmap
-- Projection des UV en façons divers
 ]]
 
 function data()
@@ -25,7 +23,6 @@ function data()
 [[该模组改进并且增加一些着色器的效果
 - 取消阴影效果
 - 增加光照贴图支持
-- 增加多种UV投射方式
 ]]				
 	},
 	zh_TW = {
@@ -34,7 +31,6 @@ function data()
 [[該模組改進並且增加一些著色器的效果
 - 取消陰影效果
 - 增加光照貼圖支持
-- 增加多種UV投射方式
 ]]			
 	},
 }
